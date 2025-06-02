@@ -60,6 +60,7 @@
               <i class="fa fa-bars"></i> All category
             </button>
             <div class="dropdown-menu">
+              <a  class="dropdown-item" href="{% url 'store' %}">All Products</a>
               {% for category in links %}
               <a class="dropdown-item" href="{{category.get_url}}">{{category.category_name}}</a>
               {% endfor %}
@@ -68,7 +69,7 @@
           <!-- category-wrap.// -->
         </div>
         <!-- col.// -->
-        <a href="./store.html" class="btn btn-outline-primary">Store</a>
+        <a href="{% url 'store' %}" class="btn btn-outline-primary">Store</a>
         <div class="col-lg col-md-6 col-sm-12 col">
           <form action="#" class="search">
             <div class="input-group w-100">
