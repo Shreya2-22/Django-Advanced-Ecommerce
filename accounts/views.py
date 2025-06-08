@@ -10,6 +10,8 @@ from django.core.mail import EmailMessage
 from django.http import HttpResponse
 from accounts.models import Account
 from .forms import RegistrationForm
+from carts.models import Cart, CartItem
+from carts.views import _cart_id
 
 def register(request):
     if request.method == 'POST':
@@ -61,6 +63,21 @@ def login(request):
         
         user = auth.authenticate(email=email, password=password)
         if user is not None:
+            try:
+                cart = Cart.objects.get(cart_id=_cart_id(request))
+                is_cart_item_exists = CartItem.objects.filter(cart=cart).exists()
+                if is_cart_item_exists:
+                    cart_item = CartItem.objects.filter(cart=cart)
+                    product_variation = []
+                    for item in cart_item:
+                        variation = item.variations.all()
+                        product_variation.append(list(variation))
+                        item.user = user
+                        item.save()
+                else:
+                    cart_item = None
+            except:
+                pass
             auth.login(request, user)
             #messages.success(request, "You are now logged in.")
             return redirect('dashboard')
