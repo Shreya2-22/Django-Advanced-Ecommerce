@@ -36,17 +36,12 @@ def add_cart(request, product_id):
     is_cart_item_exists = CartItem.objects.filter(product=product, cart=cart).exists()
     if is_cart_item_exists:
         cart_item = CartItem.objects.filter(product=product, cart=cart)
-        # existing_variations -> database
-        # current variation -> product_variation
-        # item_id -> database
         ex_var_list = []
         id = []
         for item in cart_item:
             existing_variation = item.variations.all()
             ex_var_list.append(list(existing_variation))
             id.append(item.id)
-
-        print(ex_var_list)
 
         if product_variation in ex_var_list:
             # increase the cart item quantity
@@ -59,7 +54,7 @@ def add_cart(request, product_id):
         else:
             item = CartItem.objects.create(product=product, quantity=1, cart=cart)
             if len(product_variation) > 0:
-                cart_item.variations.clear()
+                item.variations.clear()
                 item.variations.add(*product_variation)
             item.save()
     else:
@@ -122,3 +117,25 @@ def cart(request, total=0, quantity=0, cart_items=None):
     }
     return render(request, 'store/cart.html', context)
 
+def checkout(request, total=0, quantity=0, cart_items=None):
+    try:
+        tax = 0
+        grand_total= 0
+        cart = Cart.objects.get(cart_id = _cart_id(request))
+        cart_items = CartItem.objects.filter(cart = cart, is_active=True)
+        for cart_item in cart_items:
+            total += (cart_item.product.price*cart_item.quantity)
+            quantity += cart_item.quantity
+        tax = (2*total)/100
+        grand_total = total + tax
+    except ObjectDoesNotExist:
+        pass #just ignore
+
+    context = {
+        'total':total,
+        'quantity':quantity,
+        'cart_items':cart_items,
+        'tax':tax,
+        'grand_total':grand_total
+    }
+    return render(request, 'store/checkout.html', context)
