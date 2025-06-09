@@ -87,6 +87,7 @@ def login(request):
                             index = ex_var_list.index(pr)
                             item_id = id[index]
                             item = CartItem.objects.get(id=item_id)
+                            item.quantity += 1
                             item.user = user
                             item.save()
                         else:
