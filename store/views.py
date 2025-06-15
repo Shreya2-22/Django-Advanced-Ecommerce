@@ -79,24 +79,34 @@ def search(request):
     return render(request, 'store/store.html', context)
 
 def submit_review(request, product_id):
-    url = request.META.get('HTTP_REFERER')
+    url = request.META.get('HTTP_REFERER', '/')
+
     if request.method == 'POST':
-        try:
-            reviews = ReviewRating.objects.get(user__id=request.user.id, product__id=product_id)
-            form = ReviewForm(request.POST, instance=reviews)
-            form.save()
-            messages.success(request, 'Thank you! Your review has been updated.')
-            return redirect(url)
-        except ReviewRating.DoesNotExist:
+        # Correct field name: 'created_date' instead of 'created_at'
+        existing_review = ReviewRating.objects.filter(
+            user_id=request.user.id,
+            product_id=product_id
+        ).order_by('-created_date').first()
+
+        if existing_review:
+            form = ReviewForm(request.POST, instance=existing_review)
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'Thank you! Your review has been updated.')
+            else:
+                messages.error(request, 'There was a problem updating your review.')
+        else:
             form = ReviewForm(request.POST)
             if form.is_valid():
-                data = ReviewRating()
-                data.subject = form.cleaned_data['subject']
-                data.rating = form.cleaned_data['rating']
-                data.review = form.cleaned_data['review']
-                data.ip = request.META.get('REMOTE_ADDR')
-                data.product_id = product_id
-                data.user_id = request.user.id
-                data.save()
+                review = form.save(commit=False)
+                review.ip = request.META.get('REMOTE_ADDR')
+                review.product_id = product_id
+                review.user_id = request.user.id
+                review.save()
                 messages.success(request, 'Thank you! Your review has been submitted.')
-                return redirect(url)
+            else:
+                messages.error(request, 'There was a problem submitting your review.')
+
+        return redirect(url)
+
+    return redirect(url)

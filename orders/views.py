@@ -59,7 +59,11 @@ def payments(request):
     })
     to_email = request.user.email
     send_email = EmailMessage(mail_subject, message, to=[to_email])
-    send_email.send()
+    try:
+        send_email = EmailMessage(mail_subject, message, to=[to_email])
+        send_email.send()
+    except Exception as e:
+        print("Email sending failed but order continues:", e)
 
     #send order number and transaction id back to sendData method via JsonResponse
     data = {
